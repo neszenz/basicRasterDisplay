@@ -212,11 +212,17 @@ int main(int argc, const char* argv[]) {
                                           WINDOW_POS_Y,
                                           WINDOW_WIDTH,
                                           WINDOW_HEIGHT,
-                                          SDL_WINDOW_RESIZABLE);
+                                          0);
     if(window == nullptr) {
         logSDLError(LOG_OS, "SDL_CreateWindow()");
         SDL_Quit();
         return 1;
+    }
+
+    if (WINDOW_RESIZABLE) {
+        SDL_SetWindowResizable(window, SDL_TRUE);
+    } else {
+        SDL_SetWindowResizable(window, SDL_FALSE);
     }
 
     // create 2D-renderer for window

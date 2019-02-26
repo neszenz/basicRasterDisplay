@@ -26,6 +26,25 @@ void logSDLError(std::ostream &os, const std::string msg) {
     os << msg << padding << "error: " << SDL_GetError() << std::endl;
 }
 
+static SDL_Texture* createRaster(SDL_Renderer* renderer, int viewport_width,
+                                                         int viewport_height) {
+    int width = TEXTURE_WIDTH;
+    int height = TEXTURE_HEIGHT;
+
+    if (width <= 0)
+        width = viewport_width;
+    if (height <= 0)
+        height = viewport_height;
+
+    SDL_Texture* raster = SDL_CreateTexture(renderer,
+                                            PIXEL_FORMAT,
+                                            SDL_TEXTUREACCESS_STREAMING,
+                                            width,
+                                            height);
+
+    return raster;
+}
+
 void computeFPS() {
     static Uint32 last_second_timestamp = 0;
     static unsigned curr_second_frames = 0;
@@ -86,6 +105,19 @@ static void getTextureDimensions(SDL_Texture* texture, int &width, int &height) 
     SDL_QueryTexture(texture, &format, &access, &width, &height);
 
     return;
+}
+
+static bool rasterNeedsUpdate(int viewport_width, int viewport_height,
+                              int texture_width, int texture_height) {
+    if (TEXTURE_WIDTH <= 0 && viewport_width != texture_width) {
+        return true;
+    }
+
+    if (TEXTURE_HEIGHT <= 0 && viewport_height != texture_height) {
+        return true;
+    }
+
+    return false;
 }
 
 /** draw a texture to renderer at pos x,y, w/ desired w and h
@@ -237,11 +269,7 @@ int main(int argc, const char* argv[]) {
     }
 
     // create texture that represents all display pixel
-    SDL_Texture* raster = SDL_CreateTexture(renderer,
-                                            PIXEL_FORMAT,
-                                            SDL_TEXTUREACCESS_STREAMING,
-                                            TEXTURE_WIDTH,
-                                            TEXTURE_HEIGHT);
+    SDL_Texture* raster = createRaster(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
     if (raster == nullptr) {
         logSDLError(LOG_OS, "SDL_CreateTexture()");
         cleanup(renderer, window);
@@ -254,17 +282,34 @@ int main(int argc, const char* argv[]) {
         handleEvents();
 
         // + rendering + = + = + = + = + = + = + = + = + = + = + = + = + = + = +
-        // query current viewport settings
+        // query viewport dimensions
         int v_width;
         int v_height;
         getViewportDimensions(renderer, v_width, v_height);
 
-        // query texture informations
+        // query texture dimensions
         int t_width;
         int t_height;
         getTextureDimensions(raster, t_width, t_height);
 
-        //TODO check whether w/h changed and if so create new texture
+        // new raster, if w/h override is requested and dimensions are differnt
+        if (rasterNeedsUpdate(v_width, v_height, t_width, t_height)) {
+            // destroy current
+            SDL_DestroyTexture(raster);
+
+            // create new
+            raster = createRaster(renderer, v_width, v_height);
+            if (raster == nullptr) {
+                logSDLError(LOG_OS, "SDL_CreateTexture()");
+                cleanup(renderer, window);
+                SDL_Quit();
+                return 1;
+            }
+
+            // update queried texture dimensions
+            getTextureDimensions(raster, t_width, t_height);
+            state.update = true;
+        }
 
         // lock the raster texture to get pixel access
         int pitch;
@@ -273,14 +318,18 @@ int main(int argc, const char* argv[]) {
             logSDLError(LOG_OS, "SDL_LockTexture()");
         }
 
-        // now we can write colors to the local representation of our texture
-        for (int y = 0; y < t_height; ++y) {
-            for (int x = 0; x < t_width; ++x) {
-                Uint8 red = 255 * (float(x) / t_width);
-                Uint8 green = 255 * (float(y) / t_height);
-                Uint32 color = 0xff000000 | (red << 0) | (green << 8);
-                ((Uint32*)pixels)[y * t_width + x] = color;
+        if (state.update) {
+            // now we can write colors to the local representation of our texture
+            for (int y = 0; y < t_height; ++y) {
+                for (int x = 0; x < t_width; ++x) {
+                    Uint8 red = 255 * (float(x) / t_width);
+                    Uint8 green = 255 * (float(y) / t_height);
+                    Uint32 color = 0xff000000 | (red << 0) | (green << 8);
+                    ((Uint32*)pixels)[y * t_width + x] = color;
+                }
             }
+            // 60fps suffers after at best 1.8 mio. pixels if update every time
+            state.update = false;
         }
 
         // end write mode and thereby upload changes to texture

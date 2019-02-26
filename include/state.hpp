@@ -5,6 +5,9 @@
 #include <string>
 
 // window settings
+#define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA32
+const int    TEXTURE_WIDTH     = 1000;
+const int    TEXTURE_HEIGHT    = 10;
 const int    WINDOW_WIDTH      = 1280;
 const int    WINDOW_HEIGHT     = 720;
 const int    WINDOW_POS_X      = SDL_WINDOWPOS_CENTERED;

@@ -70,6 +70,24 @@ Uint32 computeSmoothDeltaTime() {
     return smoothDeltaTime;
 }
 
+static void getViewportDimensions(SDL_Renderer* renderer, int &width, int &height) {
+    SDL_Rect rect;
+
+    SDL_RenderGetViewport(renderer, &rect);
+
+    width = rect.w;
+    height = rect.h;
+
+    return;
+}
+static void getTextureDimensions(SDL_Texture* texture, int &width, int &height) {
+    Uint32 format;
+    int access;
+    SDL_QueryTexture(texture, &format, &access, &width, &height);
+
+    return;
+}
+
 /** draw a texture to renderer at pos x,y, w/ desired w and h
  * @param tex - the source texture we want to draw
  * @param ren - the renderer we want to draw to
@@ -189,36 +207,83 @@ int main(int argc, const char* argv[]) {
     }
 
     // create window based on config
-    SDL_Window* win = SDL_CreateWindow(WINDOW_NAME.c_str(),
-                                       WINDOW_POS_X,
-                                       WINDOW_POS_Y,
-                                       WINDOW_WIDTH,
-                                       WINDOW_HEIGHT,
-                                       SDL_WINDOW_SHOWN);
-    if(win == nullptr) {
+    SDL_Window* window = SDL_CreateWindow(WINDOW_NAME.c_str(),
+                                          WINDOW_POS_X,
+                                          WINDOW_POS_Y,
+                                          WINDOW_WIDTH,
+                                          WINDOW_HEIGHT,
+                                          SDL_WINDOW_RESIZABLE);
+    if(window == nullptr) {
         logSDLError(LOG_OS, "SDL_CreateWindow()");
-        cleanup(win);
         SDL_Quit();
         return 1;
     }
 
-    // create 2D-renderer for win
-    SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED |
-                                                    SDL_RENDERER_PRESENTVSYNC);
-    if(ren == nullptr) {
+    // create 2D-renderer for window
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,
+                                                SDL_RENDERER_ACCELERATED |
+                                                SDL_RENDERER_PRESENTVSYNC);
+    if(renderer == nullptr) {
         logSDLError(LOG_OS, "SDL_CreateRenderer()");
-        cleanup(ren, win);
+        cleanup(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    // create texture that represents all display pixel
+    SDL_Texture* raster = SDL_CreateTexture(renderer,
+                                            PIXEL_FORMAT,
+                                            SDL_TEXTUREACCESS_STREAMING,
+                                            TEXTURE_WIDTH,
+                                            TEXTURE_HEIGHT);
+    if (raster == nullptr) {
+        logSDLError(LOG_OS, "SDL_CreateTexture()");
+        cleanup(renderer, window);
         SDL_Quit();
         return 1;
     }
 
     while(!state.quit) {
         // + pre-rendering + = + = + = + = + = + = + = + = + = + = + = + = + = +
-        handleAllEvents();
+        handleEvents();
 
         // + rendering + = + = + = + = + = + = + = + = + = + = + = + = + = + = +
-        SDL_RenderClear(ren);
-        SDL_RenderPresent(ren);
+        // query current viewport settings
+        int v_width;
+        int v_height;
+        getViewportDimensions(renderer, v_width, v_height);
+
+        // query texture informations
+        int t_width;
+        int t_height;
+        getTextureDimensions(raster, t_width, t_height);
+
+        //TODO check whether w/h changed and if so create new texture
+
+        // lock the raster texture to get pixel access
+        int pitch;
+        void* pixels;
+        if (SDL_LockTexture(raster, NULL, &pixels, &pitch) != 0) {
+            logSDLError(LOG_OS, "SDL_LockTexture()");
+        }
+
+        // now we can write colors to the local representation of our texture
+        for (int y = 0; y < t_height; ++y) {
+            for (int x = 0; x < t_width; ++x) {
+                Uint8 red = 255 * (float(x) / t_width);
+                Uint8 green = 255 * (float(y) / t_height);
+                Uint32 color = 0xff000000 | (red << 0) | (green << 8);
+                ((Uint32*)pixels)[y * t_width + x] = color;
+            }
+        }
+
+        // end write mode and thereby upload changes to texture
+        SDL_UnlockTexture(raster);
+
+        // render raster texture directly to the display
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, raster, NULL, NULL);
+        SDL_RenderPresent(renderer);
 
         // + post-rendering  = + = + = + = + = + = + = + = + = + = + = + = + = +
         computeFPS();
@@ -229,10 +294,10 @@ int main(int argc, const char* argv[]) {
         title += " | ";
         title += "delta: " + ToString(computeSmoothDeltaTime());
         title += "]";
-        SDL_SetWindowTitle(win, title.c_str());
+        SDL_SetWindowTitle(window, title.c_str());
     }
 
-    cleanup(ren, win);
+    cleanup(renderer, window, raster);
     SDL_Quit();
     return 0;
 }

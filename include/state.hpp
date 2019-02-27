@@ -13,7 +13,6 @@ const int    WINDOW_HEIGHT     = 720;
 const int    WINDOW_POS_X      = SDL_WINDOWPOS_CENTERED;
 const int    WINDOW_POS_Y      = SDL_WINDOWPOS_CENTERED;
 const bool   WINDOW_RESIZABLE  = true;
-const int    WINDOW_BACKGROUND = 0xffffff;
 const std::string WINDOW_NAME  = "win::34942";
 
 struct State {
@@ -21,17 +20,9 @@ struct State {
     Uint32 deltaTime = 0;
     Uint32 smoothDeltaTime = 0;
 
-    bool invert = false;
-    bool reset = false;
-    bool update = true;
     bool quit = false;
-    bool animate = false;
+    bool update = true;
     bool mouseIsDown = false;
-    float zPosition = 0.0f;
-
-    Uint32 bkgd_color;
-    Uint32 line_color;
-    bool depth = false;
 };
 
 extern struct State state;

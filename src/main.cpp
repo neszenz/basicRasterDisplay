@@ -88,6 +88,16 @@ Uint32 computeSmoothDeltaTime() {
 
     return smoothDeltaTime;
 }
+static std::string generateTitle() {
+    std::string title = WINDOW_NAME;
+    title += " [";
+    title += "fps: " + ToString(round(state.fps));
+    title += " | ";
+    title += "delta: " + ToString(computeSmoothDeltaTime());
+    title += "]";
+
+    return title;
+}
 
 static void getViewportDimensions(SDL_Renderer* renderer, int &width, int &height) {
     SDL_Rect rect;
@@ -319,7 +329,7 @@ int main(int argc, const char* argv[]) {
         }
 
         if (state.update) {
-            // now we can write colors to the local representation of our texture
+            // now we can write colors to the local representation of our raster
             for (int y = 0; y < t_height; ++y) {
                 for (int x = 0; x < t_width; ++x) {
                     Uint8 red = 255 * (float(x) / t_width);
@@ -336,20 +346,14 @@ int main(int argc, const char* argv[]) {
         SDL_UnlockTexture(raster);
 
         // render raster texture directly to the display
-        SDL_RenderClear(renderer);
+        SDL_RenderClear(renderer); // kinda obsolete b/ we copy the raster whole
         SDL_RenderCopy(renderer, raster, NULL, NULL);
         SDL_RenderPresent(renderer);
 
         // + post-rendering  = + = + = + = + = + = + = + = + = + = + = + = + = +
         computeFPS();
         computeDeltaTime();
-        std::string title = WINDOW_NAME;
-        title += " [";
-        title += "fps: " + ToString(round(state.fps));
-        title += " | ";
-        title += "delta: " + ToString(computeSmoothDeltaTime());
-        title += "]";
-        SDL_SetWindowTitle(window, title.c_str());
+        SDL_SetWindowTitle(window, generateTitle().c_str());
     }
 
     cleanup(renderer, window, raster);

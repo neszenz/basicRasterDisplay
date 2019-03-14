@@ -2,6 +2,8 @@
 
 #include "util.hpp"
 
+using namespace brd;
+
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA32
 
 const int  TEXTURE_WIDTH    = -1;
@@ -12,7 +14,7 @@ const int  WINDOW_POS_X     = SDL_WINDOWPOS_CENTERED;
 const int  WINDOW_POS_Y     = SDL_WINDOWPOS_CENTERED;
 const bool WINDOW_RESIZABLE = true;
 
-BRD::BRD() {
+Display::Display() {
     // create window based on config
     m_window = SDL_CreateWindow(m_window_name.c_str(),
                                             WINDOW_POS_X,
@@ -51,11 +53,11 @@ BRD::BRD() {
     }
 }
 
-BRD::~BRD() {
+Display::~Display() {
     cleanup(m_renderer, m_window, m_raster, m_format);
 }
 
-void BRD::getViewportDimensions(int &width, int &height) {
+void Display::getViewportDimensions(int &width, int &height) {
     SDL_Rect rect;
 
     SDL_RenderGetViewport(m_renderer, &rect);
@@ -63,18 +65,18 @@ void BRD::getViewportDimensions(int &width, int &height) {
     width = rect.w;
     height = rect.h;
 }
-void BRD::getTextureDimensions(int &width, int &height) {
+void Display::getTextureDimensions(int &width, int &height) {
     Uint32 format;
     int access;
     SDL_QueryTexture(m_raster, &format, &access, &width, &height);
 }
 
-void BRD::setTitle(std::string title) {
+void Display::setTitle(std::string title) {
     SDL_SetWindowTitle(m_window, title.c_str());
 }
 
 // new raster if dimensions differ from viewport (e.g. after resize)
-bool BRD::updateRasterDimensions() {
+bool Display::updateRasterDimensions() {
     if (rasterNeedsUpdate() == false) {
         // no need to update
         return false;
@@ -92,7 +94,7 @@ bool BRD::updateRasterDimensions() {
     return true;
 }
 
-void BRD::lock(Uint32** pixels) {
+void Display::lock(Uint32** pixels) {
     int pitch;
     void* void_pixels;
     if (SDL_LockTexture(m_raster, NULL, &void_pixels, &pitch) != 0) {
@@ -101,17 +103,17 @@ void BRD::lock(Uint32** pixels) {
 
     *pixels = (Uint32*)void_pixels;
 }
-void BRD::unlock() {
+void Display::unlock() {
     SDL_UnlockTexture(m_raster);
 }
 
-void BRD::render() {
+void Display::render() {
     SDL_RenderClear(m_renderer); // kinda obsolete b/ we copy the raster whole
     SDL_RenderCopy(m_renderer, m_raster, NULL, NULL);
     SDL_RenderPresent(m_renderer);
 }
 
-SDL_Texture* BRD::createNewRaster() {
+SDL_Texture* Display::createNewRaster() {
     int width = TEXTURE_WIDTH;
     int height = TEXTURE_HEIGHT;
 
@@ -134,7 +136,7 @@ SDL_Texture* BRD::createNewRaster() {
     return raster;
 }
 
-bool BRD::rasterNeedsUpdate() {
+bool Display::rasterNeedsUpdate() {
     // acquire information
     int viewport_width;
     int viewport_height;

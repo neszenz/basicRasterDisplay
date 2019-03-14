@@ -192,7 +192,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    BRD display;
+    brd::Display display;
 
     while(!state.quit) {
         // + pre-rendering + = + = + = + = + = + = + = + = + = + = + = + = + = +

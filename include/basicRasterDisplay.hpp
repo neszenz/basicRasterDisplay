@@ -1,39 +1,43 @@
-#ifndef BRD_HPP
-#define BRD_HPP
+#ifndef BASIC_RASTER_DISPLAY_HPP
+#define BASIC_RASTER_DISPLAY_HPP
 
 #include <SDL2/SDL.h>
 #include <string>
 
-class BRD {
-    public:
-        BRD();
-        ~BRD();
+namespace brd {
 
-        void getViewportDimensions(int &width, int &height);
-        void getTextureDimensions(int &width, int &height);
+    class Display {
+        public:
+            Display();
+            ~Display();
 
-        void setTitle(std::string title);
+            void getViewportDimensions(int &width, int &height);
+            void getTextureDimensions(int &width, int &height);
 
-        bool updateRasterDimensions();
+            void setTitle(std::string title);
 
-        void lock(Uint32** pixels);
-        void unlock();
+            bool updateRasterDimensions();
 
-        void render();
+            void lock(Uint32** pixels);
+            void unlock();
 
-    private:
-        // sdl objects
-        SDL_Window*      m_window;
-        SDL_Renderer*    m_renderer;
-        SDL_Texture*     m_raster;
-        SDL_PixelFormat* m_format;
+            void render();
 
-        // window settings
-        std::string m_window_name = "win::34942";
+        private:
+            // sdl objects
+            SDL_Window*      m_window;
+            SDL_Renderer*    m_renderer;
+            SDL_Texture*     m_raster;
+            SDL_PixelFormat* m_format;
 
-        SDL_Texture* createNewRaster();
+            // window settings
+            std::string m_window_name = "win::34942";
 
-        bool rasterNeedsUpdate();
-};
+            SDL_Texture* createNewRaster();
 
-#endif//BRD_HPP
+            bool rasterNeedsUpdate();
+    };
+
+}
+
+#endif//BASIC_RASTER_DISPLAY_HPP

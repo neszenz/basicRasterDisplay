@@ -43,10 +43,16 @@ BRD::BRD() {
     if (m_raster == nullptr) {
         throwSDLError("createNewRaster()");
     }
+
+    // create pixel format for rgba to Uint32 mapping
+    m_format = SDL_AllocFormat(PIXEL_FORMAT);
+    if (m_format == nullptr) {
+        throwSDLError("SDL_AllocFormat()");
+    }
 }
 
 BRD::~BRD() {
-    cleanup(m_renderer, m_window, m_raster);
+    cleanup(m_renderer, m_window, m_raster, m_format);
 }
 
 void BRD::getViewportDimensions(int &width, int &height) {

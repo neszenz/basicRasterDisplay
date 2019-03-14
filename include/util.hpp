@@ -28,7 +28,6 @@ void throwSDLError(const std::string msg);
    cleanup(t); // cleanup the first item in the list
    cleanup(args...); // clean up the remaining arguments
  }
-
  /*
  * These specializations serve to free the passed argument and also provide the
  * base cases for the recursive call above, eg. when args is only a single
@@ -62,6 +61,13 @@ inline void cleanup<SDL_Surface>(SDL_Surface *surf){
 		return;
 	}
 	SDL_FreeSurface(surf);
+}
+template<>
+inline void cleanup<SDL_PixelFormat>(SDL_PixelFormat *format){
+	if (!format){
+		return;
+	}
+	SDL_FreeFormat(format);
 }
 
 #endif // _UTIL_HPP

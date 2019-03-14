@@ -23,9 +23,10 @@ class BRD {
 
     private:
         // sdl objects
-        SDL_Window*   m_window;
-        SDL_Renderer* m_renderer;
-        SDL_Texture*  m_raster;
+        SDL_Window*      m_window;
+        SDL_Renderer*    m_renderer;
+        SDL_Texture*     m_raster;
+        SDL_PixelFormat* m_format;
 
         // window settings
         std::string m_window_name = "win::34942";

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include "basicRasterDisplay.hpp"
 #include "icu.hpp"
 #include "state.hpp"
 #include "util.hpp"
@@ -12,25 +13,6 @@ struct State state;
 
 // modul wide visiable ostream for logSDLError()
 static std::ostream &LOG_OS = std::cerr;
-
-static SDL_Texture* createRaster(SDL_Renderer* renderer, int viewport_width,
-                                                         int viewport_height) {
-    int width = TEXTURE_WIDTH;
-    int height = TEXTURE_HEIGHT;
-
-    if (width <= 0)
-        width = viewport_width;
-    if (height <= 0)
-        height = viewport_height;
-
-    SDL_Texture* raster = SDL_CreateTexture(renderer,
-                                            PIXEL_FORMAT,
-                                            SDL_TEXTUREACCESS_STREAMING,
-                                            width,
-                                            height);
-
-    return raster;
-}
 
 void computeFPS() {
     static Uint32 last_second_timestamp = 0;
@@ -98,19 +80,6 @@ void getTextureDimensions(SDL_Texture* texture, int &width, int &height) {
     Uint32 format;
     int access;
     SDL_QueryTexture(texture, &format, &access, &width, &height);
-}
-
-static bool rasterNeedsUpdate(int viewport_width, int viewport_height,
-                              int texture_width, int texture_height) {
-    if (TEXTURE_WIDTH <= 0 && viewport_width != texture_width) {
-        return true;
-    }
-
-    if (TEXTURE_HEIGHT <= 0 && viewport_height != texture_height) {
-        return true;
-    }
-
-    return false;
 }
 
 /** draw a texture to renderer at pos x,y, w/ desired w and h
@@ -223,93 +192,23 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    // check displays
-    for(int count=SDL_GetNumVideoDisplays(), i=0; i<count; ++i) {
-        if(i==0) std::cout << count << " video display(s) found:" << std::endl;
-        SDL_DisplayMode mode;
-        SDL_GetDesktopDisplayMode(i, &mode);
-        std::cout << " (" << i+1 << ") \"" << SDL_GetDisplayName(i) << "\" " << mode.w << ':' << mode.h << '@' << mode.refresh_rate << std::endl;
-    }
-
-    // create window based on config
-    SDL_Window* window = SDL_CreateWindow(WINDOW_NAME.c_str(),
-                                          WINDOW_POS_X,
-                                          WINDOW_POS_Y,
-                                          WINDOW_WIDTH,
-                                          WINDOW_HEIGHT,
-                                          0);
-    if(window == nullptr) {
-        logSDLError(LOG_OS, "SDL_CreateWindow()");
-        SDL_Quit();
-        return 1;
-    }
-
-    if (WINDOW_RESIZABLE) {
-        SDL_SetWindowResizable(window, SDL_TRUE);
-    } else {
-        SDL_SetWindowResizable(window, SDL_FALSE);
-    }
-
-    // create 2D-renderer for window
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,
-                                                SDL_RENDERER_ACCELERATED |
-                                                SDL_RENDERER_PRESENTVSYNC);
-    if(renderer == nullptr) {
-        logSDLError(LOG_OS, "SDL_CreateRenderer()");
-        cleanup(window);
-        SDL_Quit();
-        return 1;
-    }
-
-    // create texture that represents all display pixel
-    SDL_Texture* raster = createRaster(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-    if (raster == nullptr) {
-        logSDLError(LOG_OS, "SDL_CreateTexture()");
-        cleanup(renderer, window);
-        SDL_Quit();
-        return 1;
-    }
+    BRD display;
 
     while(!state.quit) {
         // + pre-rendering + = + = + = + = + = + = + = + = + = + = + = + = + = +
         handleEvents();
 
         // + rendering + = + = + = + = + = + = + = + = + = + = + = + = + = + = +
-        // query viewport dimensions
-        int v_width;
-        int v_height;
-        getViewportDimensions(renderer, v_width, v_height);
-
-        // query texture dimensions
-        int t_width;
-        int t_height;
-        getTextureDimensions(raster, t_width, t_height);
-
         // new raster, if w/h override is requested and dimensions are different
-        if (rasterNeedsUpdate(v_width, v_height, t_width, t_height)) {
-            // destroy current
-            SDL_DestroyTexture(raster);
-
-            // create new
-            raster = createRaster(renderer, v_width, v_height);
-            if (raster == nullptr) {
-                logSDLError(LOG_OS, "SDL_CreateTexture()");
-                cleanup(renderer, window);
-                SDL_Quit();
-                return 1;
-            }
-
-            // update queried texture dimensions
-            getTextureDimensions(raster, t_width, t_height);
-            state.update = true;
-        }
+        state.update = (display.updateRasterDimensions())? true : state.update;
 
         // lock the raster texture to get pixel access
-        int pitch;
-        void* pixels;
-        if (SDL_LockTexture(raster, NULL, &pixels, &pitch) != 0) {
-            logSDLError(LOG_OS, "SDL_LockTexture()");
-        }
+        Uint32* pixels;
+        display.lock(&pixels);
+
+        int t_width;
+        int t_height;
+        display.getTextureDimensions(t_width, t_height);
 
         if (state.update) {
             // now we can write colors to the local representation of our raster
@@ -318,7 +217,7 @@ int main(int argc, const char* argv[]) {
                     Uint8 red = 255 * (float(x) / t_width);
                     Uint8 green = 255 * (float(y) / t_height);
                     Uint32 color = 0xff000000 | (red << 0) | (green << 8);
-                    ((Uint32*)pixels)[y * t_width + x] = color;
+                    pixels[y * t_width + x] = color;
                 }
             }
             // 60fps suffers after at best 1.8 mio. pixels if update every time
@@ -326,20 +225,17 @@ int main(int argc, const char* argv[]) {
         }
 
         // end write mode and thereby upload changes to texture
-        SDL_UnlockTexture(raster);
+        display.unlock();
 
-        // render raster texture directly to the display
-        SDL_RenderClear(renderer); // kinda obsolete b/ we copy the raster whole
-        SDL_RenderCopy(renderer, raster, NULL, NULL);
-        SDL_RenderPresent(renderer);
+        // render raster display
+        display.render();
 
         // + post-rendering  = + = + = + = + = + = + = + = + = + = + = + = + = +
         computeFPS();
         computeDeltaTime();
-        SDL_SetWindowTitle(window, generateTitle().c_str());
+        display.setTitle(generateTitle());
     }
 
-    cleanup(renderer, window, raster);
     SDL_Quit();
     return 0;
 }

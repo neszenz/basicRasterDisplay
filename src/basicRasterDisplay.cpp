@@ -5,26 +5,16 @@
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA32
 
 const int  TEXTURE_WIDTH    = -1;
-const int  TEXTURE_HEIGHT   = -1;
+const int  TEXTURE_HEIGHT   = 10;
 const int  WINDOW_WIDTH     = 1280;
 const int  WINDOW_HEIGHT    = 720;
 const int  WINDOW_POS_X     = SDL_WINDOWPOS_CENTERED;
 const int  WINDOW_POS_Y     = SDL_WINDOWPOS_CENTERED;
 const bool WINDOW_RESIZABLE = true;
 
-// init static member
-int BRD::m_numOfDisplays = 0;
-
 BRD::BRD() {
-    if (m_numOfDisplays == 0) {
-        // init SDL lib and specified subsystems
-        if(SDL_Init(SDL_INIT_VIDEO) != 0){
-            throwSDLError("SDL_Init()");
-        }
-    }
-
     // create window based on config
-    SDL_Window* m_window = SDL_CreateWindow(m_window_name.c_str(),
+    m_window = SDL_CreateWindow(m_window_name.c_str(),
                                             WINDOW_POS_X,
                                             WINDOW_POS_Y,
                                             WINDOW_WIDTH,
@@ -41,7 +31,7 @@ BRD::BRD() {
     }
 
     // create 2D-renderer for window
-    SDL_Renderer* m_renderer = SDL_CreateRenderer(m_window, -1,
+    m_renderer = SDL_CreateRenderer(m_window, -1,
                                                   SDL_RENDERER_ACCELERATED |
                                                   SDL_RENDERER_PRESENTVSYNC);
     if(m_renderer == nullptr) {
@@ -49,21 +39,14 @@ BRD::BRD() {
     }
 
     // create texture that represents all display pixel
-    SDL_Texture* m_raster = this->createNewRaster();
+    m_raster = this->createNewRaster();
     if (m_raster == nullptr) {
         throwSDLError("createNewRaster()");
     }
-
-    m_numOfDisplays++;
 }
 
 BRD::~BRD() {
     cleanup(m_renderer, m_window, m_raster);
-    if (m_numOfDisplays <= 1) {
-        SDL_Quit();
-    }
-
-    m_numOfDisplays--;
 }
 
 void BRD::getViewportDimensions(int &width, int &height) {
@@ -74,22 +57,45 @@ void BRD::getViewportDimensions(int &width, int &height) {
     width = rect.w;
     height = rect.h;
 }
-
 void BRD::getTextureDimensions(int &width, int &height) {
     Uint32 format;
     int access;
     SDL_QueryTexture(m_raster, &format, &access, &width, &height);
 }
 
-void BRD::lockDisplay(Uint32* pixels) {
+void BRD::setTitle(std::string title) {
+    SDL_SetWindowTitle(m_window, title.c_str());
+}
+
+// new raster if dimensions differ from viewport (e.g. after resize)
+bool BRD::updateRasterDimensions() {
+    if (rasterNeedsUpdate() == false) {
+        // no need to update
+        return false;
+    }
+
+    // destroy current
+    SDL_DestroyTexture(m_raster);
+
+    // create new
+    m_raster = this->createNewRaster();
+    if (m_raster == nullptr) {
+        throwSDLError("SDL_CreateTexture()");
+    }
+
+    return true;
+}
+
+void BRD::lock(Uint32** pixels) {
     int pitch;
-    void* void_pixels = (void*)pixels;
+    void* void_pixels;
     if (SDL_LockTexture(m_raster, NULL, &void_pixels, &pitch) != 0) {
         throwSDLError("SDL_LockTexture()");
     }
-}
 
-void BRD::unlockDisplay() {
+    *pixels = (Uint32*)void_pixels;
+}
+void BRD::unlock() {
     SDL_UnlockTexture(m_raster);
 }
 
@@ -120,4 +126,25 @@ SDL_Texture* BRD::createNewRaster() {
                                             height);
 
     return raster;
+}
+
+bool BRD::rasterNeedsUpdate() {
+    // acquire information
+    int viewport_width;
+    int viewport_height;
+    this->getViewportDimensions(viewport_width, viewport_height);
+    int texture_width;
+    int texture_height;
+    this->getTextureDimensions(texture_width, texture_height);
+
+    // decide
+    if (TEXTURE_WIDTH <= 0 && viewport_width != texture_width) {
+        return true;
+    }
+
+    if (TEXTURE_HEIGHT <= 0 && viewport_height != texture_height) {
+        return true;
+    }
+
+    return false;
 }

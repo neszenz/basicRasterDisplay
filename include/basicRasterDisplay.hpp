@@ -6,16 +6,22 @@
 
 class BRD {
     public:
-        BRD(); // also increments 'm_numOfDisplays'
-        ~BRD();// also decrements 'm_numOfDisplays'
+        BRD();
+        ~BRD();
 
         void getViewportDimensions(int &width, int &height);
         void getTextureDimensions(int &width, int &height);
-        void lockDisplay(Uint32* pixels);
-        void unlockDisplay();
+
+        void setTitle(std::string title);
+
+        bool updateRasterDimensions();
+
+        void lock(Uint32** pixels);
+        void unlock();
+
         void render();
+
     private:
-        static int m_numOfDisplays;
         // sdl objects
         SDL_Window*   m_window;
         SDL_Renderer* m_renderer;
@@ -25,6 +31,8 @@ class BRD {
         std::string m_window_name = "win::34942";
 
         SDL_Texture* createNewRaster();
+
+        bool rasterNeedsUpdate();
 };
 
 #endif//BRD_HPP

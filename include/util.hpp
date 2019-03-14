@@ -18,8 +18,6 @@ std::string ToString(const T &val) {
 void logSDLError(std::ostream &os, const std::string msg);
 void logSDLError(const std::string msg);
 void throwSDLError(const std::string msg);
-void getViewportDimensions(SDL_Renderer* renderer, int &width, int &height);
-void getTextureDimensions(SDL_Texture* texture, int &width, int &height);
 
 /*
  * Recurse through the list of arguments to clean up, cleaning up

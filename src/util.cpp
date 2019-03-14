@@ -27,17 +27,3 @@ void throwSDLError(const std::string msg) {
     ss << msg << padding << "error: " << SDL_GetError() << std::endl;
     throw std::runtime_error(ss.str());
 }
-
-void getViewportDimensions(SDL_Renderer* renderer, int &width, int &height) {
-    SDL_Rect rect;
-
-    SDL_RenderGetViewport(renderer, &rect);
-
-    width = rect.w;
-    height = rect.h;
-}
-void getTextureDimensions(SDL_Texture* texture, int &width, int &height) {
-    Uint32 format;
-    int access;
-    SDL_QueryTexture(texture, &format, &access, &width, &height);
-}

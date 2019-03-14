@@ -86,6 +86,20 @@ static std::string generateTitle() {
     return title;
 }
 
+void getViewportDimensions(SDL_Renderer* renderer, int &width, int &height) {
+    SDL_Rect rect;
+
+    SDL_RenderGetViewport(renderer, &rect);
+
+    width = rect.w;
+    height = rect.h;
+}
+void getTextureDimensions(SDL_Texture* texture, int &width, int &height) {
+    Uint32 format;
+    int access;
+    SDL_QueryTexture(texture, &format, &access, &width, &height);
+}
+
 static bool rasterNeedsUpdate(int viewport_width, int viewport_height,
                               int texture_width, int texture_height) {
     if (TEXTURE_WIDTH <= 0 && viewport_width != texture_width) {

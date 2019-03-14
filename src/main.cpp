@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 
-#include "cleanup.hpp"
 #include "icu.hpp"
 #include "state.hpp"
 #include "util.hpp"
@@ -13,18 +12,6 @@ struct State state;
 
 // modul wide visiable ostream for logSDLError()
 static std::ostream &LOG_OS = std::cerr;
-
-/** Log an SDL error with error msg to output stream of our choice
- * @param os - the output stream to write the message to
- * @param msg - error msg to write, format will be "msg error: SDL_GetError()"
- */
-void logSDLError(std::ostream &os, const std::string msg) {
-    // padding ensures a space between msg and rest of log string
-    char padding = '\0';
-    if(msg.back() != ' ') padding = ' ';
-
-    os << msg << padding << "error: " << SDL_GetError() << std::endl;
-}
 
 static SDL_Texture* createRaster(SDL_Renderer* renderer, int viewport_width,
                                                          int viewport_height) {
@@ -97,24 +84,6 @@ static std::string generateTitle() {
     title += "]";
 
     return title;
-}
-
-static void getViewportDimensions(SDL_Renderer* renderer, int &width, int &height) {
-    SDL_Rect rect;
-
-    SDL_RenderGetViewport(renderer, &rect);
-
-    width = rect.w;
-    height = rect.h;
-
-    return;
-}
-static void getTextureDimensions(SDL_Texture* texture, int &width, int &height) {
-    Uint32 format;
-    int access;
-    SDL_QueryTexture(texture, &format, &access, &width, &height);
-
-    return;
 }
 
 static bool rasterNeedsUpdate(int viewport_width, int viewport_height,
@@ -302,7 +271,7 @@ int main(int argc, const char* argv[]) {
         int t_height;
         getTextureDimensions(raster, t_width, t_height);
 
-        // new raster, if w/h override is requested and dimensions are differnt
+        // new raster, if w/h override is requested and dimensions are different
         if (rasterNeedsUpdate(v_width, v_height, t_width, t_height)) {
             // destroy current
             SDL_DestroyTexture(raster);

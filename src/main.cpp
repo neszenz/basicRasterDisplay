@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-#include "basicRasterDisplay.hpp"
+#include "brd_display.hpp"
 #include "icu.hpp"
 #include "state.hpp"
 #include "util.hpp"

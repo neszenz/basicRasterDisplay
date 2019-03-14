@@ -1,13 +1,14 @@
-#include "basicRasterDisplay.hpp"
+#include "brd_display.hpp"
 
 #include "util.hpp"
 
 using namespace brd;
 
+// hard coded config
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA32
-
-const int  TEXTURE_WIDTH    = -1;
-const int  TEXTURE_HEIGHT   = 10;
+// if tex dimensions are <= 0, the are linked to win dimensions
+const int  TEXTURE_WIDTH    = 89;
+const int  TEXTURE_HEIGHT   = 50;
 const int  WINDOW_WIDTH     = 1280;
 const int  WINDOW_HEIGHT    = 720;
 const int  WINDOW_POS_X     = SDL_WINDOWPOS_CENTERED;
@@ -17,11 +18,11 @@ const bool WINDOW_RESIZABLE = true;
 Display::Display() {
     // create window based on config
     m_window = SDL_CreateWindow(m_window_name.c_str(),
-                                            WINDOW_POS_X,
-                                            WINDOW_POS_Y,
-                                            WINDOW_WIDTH,
-                                            WINDOW_HEIGHT,
-                                            0);
+                                WINDOW_POS_X,
+                                WINDOW_POS_Y,
+                                WINDOW_WIDTH,
+                                WINDOW_HEIGHT,
+                                0);
     if(m_window == nullptr) {
         throwSDLError("SDL_CreateWindow()");
     }
@@ -34,8 +35,8 @@ Display::Display() {
 
     // create 2D-renderer for window
     m_renderer = SDL_CreateRenderer(m_window, -1,
-                                                  SDL_RENDERER_ACCELERATED |
-                                                  SDL_RENDERER_PRESENTVSYNC);
+                                    SDL_RENDERER_ACCELERATED |
+                                    SDL_RENDERER_PRESENTVSYNC);
     if(m_renderer == nullptr) {
         throwSDLError("SDL_CreateRenderer()");
     }

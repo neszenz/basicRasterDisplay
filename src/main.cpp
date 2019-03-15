@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "brd_display.hpp"
+#include "brd_pixel.hpp"
 #include "icu.hpp"
 #include "state.hpp"
 #include "util.hpp"
@@ -214,10 +215,10 @@ int main(int argc, const char* argv[]) {
             // now we can write colors to the local representation of our raster
             for (int y = 0; y < t_height; ++y) {
                 for (int x = 0; x < t_width; ++x) {
-                    Uint8 red = 255 * (float(x) / t_width);
-                    Uint8 green = 255 * (float(y) / t_height);
-                    Uint32 color = 0xff000000 | (red << 0) | (green << 8);
-                    pixels[y * t_width + x] = color;
+                    float red = float(x) / t_width;
+                    float green = float(y) / t_height;
+                    brd::Pixel pixel(red, green, 0.0f);
+                    pixels[y * t_width + x] = pixel.toUint32();
                 }
             }
             // 60fps suffers after at best 1.8 mio. pixels if update every time

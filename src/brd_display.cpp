@@ -109,10 +109,11 @@ void Display::unlock() {
 }
 
 void Display::render() {
-    SDL_RenderClear(m_renderer); // kinda obsolete b/ we copy the raster whole
+    //SDL_RenderClear(m_renderer); // kinda obsolete b/ we copy the raster whole
     SDL_RenderCopy(m_renderer, m_raster, NULL, NULL);
     SDL_RenderPresent(m_renderer);
 
+    // update meta data and window title
     computeFPS();
     computeDeltaTime();
     SDL_SetWindowTitle(m_window, this->generateTitle().c_str());

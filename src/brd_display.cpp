@@ -7,8 +7,8 @@ using namespace brd;
 // hard coded config
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA32
 // if tex dimensions are <= 0, the are linked to win dimensions
-const int  TEXTURE_WIDTH    = 89;
-const int  TEXTURE_HEIGHT   = 50;
+const int  TEXTURE_WIDTH    = -1;
+const int  TEXTURE_HEIGHT   = -1;
 const int  WINDOW_WIDTH     = 1280;
 const int  WINDOW_HEIGHT    = 720;
 const int  WINDOW_POS_X     = SDL_WINDOWPOS_CENTERED;
@@ -72,8 +72,8 @@ void Display::getTextureDimensions(int &width, int &height) {
     SDL_QueryTexture(m_raster, &format, &access, &width, &height);
 }
 
-void Display::setTitle(std::string title) {
-    SDL_SetWindowTitle(m_window, title.c_str());
+void Display::setWindowName(std::string name) {
+    m_window_name = name;
 }
 
 // new raster if dimensions differ from viewport (e.g. after resize)
@@ -112,29 +112,54 @@ void Display::render() {
     SDL_RenderClear(m_renderer); // kinda obsolete b/ we copy the raster whole
     SDL_RenderCopy(m_renderer, m_raster, NULL, NULL);
     SDL_RenderPresent(m_renderer);
+
+    computeFPS();
+    computeDeltaTime();
+    SDL_SetWindowTitle(m_window, this->generateTitle().c_str());
 }
 
-SDL_Texture* Display::createNewRaster() {
-    int width = TEXTURE_WIDTH;
-    int height = TEXTURE_HEIGHT;
+void Display::computeFPS() {
+    Uint32 time_since_last_second = SDL_GetTicks() - m_meta.last_second_timestamp;
+    m_meta.curr_second_frames++;
 
-    // query viewport dimensions
-    int v_width;
-    int v_height;
-    this->getViewportDimensions(v_width, v_height);
+    if (time_since_last_second > 250) {
+        m_fps = 1000.0 * m_meta.curr_second_frames / time_since_last_second;
+        // reset
+        m_meta.last_second_timestamp = SDL_GetTicks();
+        m_meta.curr_second_frames = 0;
+    }
+}
+void Display::computeDeltaTime() {
+    Uint32 curr_timestamp = SDL_GetTicks();
 
-    if (width <= 0)
-        width = v_width;
-    if (height <= 0)
-        height = v_height;
+    m_deltaTime = curr_timestamp - m_meta.last_timestamp;
+    m_meta.last_timestamp = curr_timestamp;
+}
+Uint32 Display::computeSmoothDeltaTime() {
+    m_meta.history.insert(m_meta.history.begin(), m_deltaTime);
+    m_meta.history.pop_back();
 
-    SDL_Texture* raster = SDL_CreateTexture(m_renderer,
-                                            PIXEL_FORMAT,
-                                            SDL_TEXTUREACCESS_STREAMING,
-                                            width,
-                                            height);
+    Uint32 sum = 0;
+    for (Uint32 d : m_meta.history) {
+        sum += d;
+    }
 
-    return raster;
+    Uint32 smoothDeltaTime = 0;
+    if (m_meta.history.size() > 0) {
+        smoothDeltaTime = sum / m_meta.history.size();
+    }
+
+    return smoothDeltaTime;
+}
+std::string Display::generateTitle() {
+    std::string title = m_window_name;
+    title += " [";
+    title += "fps: " + ToString(round(m_fps));
+    title += " | ";
+    title += "delta: " + ToString(this->computeSmoothDeltaTime());
+    title += "]";
+
+    return title;
 }
 
 bool Display::rasterNeedsUpdate() {
@@ -156,4 +181,26 @@ bool Display::rasterNeedsUpdate() {
     }
 
     return false;
+}
+SDL_Texture* Display::createNewRaster() {
+    int width = TEXTURE_WIDTH;
+    int height = TEXTURE_HEIGHT;
+
+    // query viewport dimensions
+    int v_width;
+    int v_height;
+    this->getViewportDimensions(v_width, v_height);
+
+    if (width <= 0)
+        width = v_width;
+    if (height <= 0)
+        height = v_height;
+
+    SDL_Texture* raster = SDL_CreateTexture(m_renderer,
+                                            PIXEL_FORMAT,
+                                            SDL_TEXTUREACCESS_STREAMING,
+                                            width,
+                                            height);
+
+    return raster;
 }

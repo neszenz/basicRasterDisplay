@@ -21,6 +21,7 @@
 
 #include <SDL2/SDL.h>
 #include <string>
+#include <vector>
 
 namespace brd {
 
@@ -32,7 +33,7 @@ namespace brd {
             void getViewportDimensions(int &width, int &height);
             void getTextureDimensions(int &width, int &height);
 
-            void setTitle(std::string title);
+            void setWindowName(std::string name);
 
             bool updateRasterDimensions();
 
@@ -49,11 +50,30 @@ namespace brd {
             SDL_PixelFormat* m_format;
 
             // window settings
-            std::string m_window_name = "win::34942";
+            std::string m_window_name = "brd::display";
 
-            SDL_Texture* createNewRaster();
+            // render meta data
+            double m_fps = 0;
+            Uint32 m_deltaTime = 0;
+            Uint32 m_smoothDeltaTime = 0;
+            struct {
+                // computeFPS() static variables workaround
+                Uint32 last_second_timestamp = 0;
+                unsigned curr_second_frames = 0;
+                // computeDeltaTime() static variables workaround
+                Uint32 last_timestamp = 0;
+                // computeSmoothDeltaTime() static variables workaround
+                std::vector<Uint32> history = std::vector<Uint32>(10);
+            } m_meta;
+
+            // render meta data methods
+            void computeFPS();
+            void computeDeltaTime();
+            Uint32 computeSmoothDeltaTime();
+            std::string generateTitle();
 
             bool rasterNeedsUpdate();
+            SDL_Texture* createNewRaster();
     };
 
 }

@@ -1,87 +1,19 @@
 #include <SDL2/SDL.h>
 
-#include <iostream>
-#include <vector>
-
 #include "brd_display.hpp"
 #include "brd_pixel.hpp"
 #include "icu.hpp"
 #include "state.hpp"
 #include "util.hpp"
 
+#include <iostream>
+#include <vector>
+
 // global engine state
 struct State state;
 
 // modul wide visiable ostream for logSDLError()
 static std::ostream &LOG_OS = std::cerr;
-
-void computeFPS() {
-    static Uint32 last_second_timestamp = 0;
-    static unsigned curr_second_frames = 0;
-
-    Uint32 time_since_last_second = SDL_GetTicks() - last_second_timestamp;
-    curr_second_frames++;
-
-    if (time_since_last_second > 250) {
-        state.fps = 1000.0 * curr_second_frames / time_since_last_second;
-        // reset
-        last_second_timestamp = SDL_GetTicks();
-        curr_second_frames = 0;
-    }
-
-    return;
-}
-void computeDeltaTime() {
-    static Uint32 last_timestamp = 0;
-    Uint32 curr_timestamp = SDL_GetTicks();
-
-    state.deltaTime = curr_timestamp - last_timestamp;
-    last_timestamp = curr_timestamp;
-
-    return;
-}
-Uint32 computeSmoothDeltaTime() {
-    static std::vector<Uint32> history(10);
-
-    history.insert(history.begin(), state.deltaTime);
-    history.pop_back();
-
-    Uint32 sum = 0;
-    for (Uint32 d : history) {
-        sum += d;
-    }
-
-    Uint32 smoothDeltaTime = 0;
-    if (history.size() > 0) {
-        smoothDeltaTime = sum / history.size();
-    }
-
-    return smoothDeltaTime;
-}
-static std::string generateTitle() {
-    std::string title = WINDOW_NAME;
-    title += " [";
-    title += "fps: " + ToString(round(state.fps));
-    title += " | ";
-    title += "delta: " + ToString(computeSmoothDeltaTime());
-    title += "]";
-
-    return title;
-}
-
-void getViewportDimensions(SDL_Renderer* renderer, int &width, int &height) {
-    SDL_Rect rect;
-
-    SDL_RenderGetViewport(renderer, &rect);
-
-    width = rect.w;
-    height = rect.h;
-}
-void getTextureDimensions(SDL_Texture* texture, int &width, int &height) {
-    Uint32 format;
-    int access;
-    SDL_QueryTexture(texture, &format, &access, &width, &height);
-}
 
 /** draw a texture to renderer at pos x,y, w/ desired w and h
  * @param tex - the source texture we want to draw
@@ -186,7 +118,7 @@ void renderTextureCentered(SDL_Texture *tex, SDL_Renderer *ren, const int w, con
 }
 
 int main(int argc, const char* argv[]) {
-    // init SDL lib and specified subsystems
+    // must be done to use brd::Display
     if(SDL_Init(SDL_INIT_VIDEO) != 0){
         logSDLError(LOG_OS, "SDL_Init()");
         SDL_Quit();
@@ -194,6 +126,7 @@ int main(int argc, const char* argv[]) {
     }
 
     brd::Display display;
+    display.setWindowName(WINDOW_NAME);
 
     while(!state.quit) {
         // + pre-rendering + = + = + = + = + = + = + = + = + = + = + = + = + = +
@@ -230,11 +163,6 @@ int main(int argc, const char* argv[]) {
 
         // render raster display
         display.render();
-
-        // + post-rendering  = + = + = + = + = + = + = + = + = + = + = + = + = +
-        computeFPS();
-        computeDeltaTime();
-        display.setTitle(generateTitle());
     }
 
     SDL_Quit();

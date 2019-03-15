@@ -13,7 +13,7 @@ void Pixel::initFormat() {
     }
 }
 
-Pixel::Pixel(float r, float g, float b, float a = 1.0f) {
+Pixel::Pixel(float r, float g, float b, float a) {
     this->r = 255 * r;
     this->g = 255 * g;
     this->b = 255 * b;
@@ -22,7 +22,7 @@ Pixel::Pixel(float r, float g, float b, float a = 1.0f) {
     this->initFormat();
 }
 
-Pixel::Pixel(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255) : r(r), g(g), b(b), a(a) {
+Pixel::Pixel(Uint8 r, Uint8 g, Uint8 b, Uint8 a) : r(r), g(g), b(b), a(a) {
     this->initFormat();
 }
 

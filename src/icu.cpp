@@ -5,8 +5,8 @@ static void handleKeyEvent(SDL_Event &e) {
         case SDLK_ESCAPE:
             state.quit = true;
             break;
-        default:
-            break;
+        case SDLK_f:
+            state.showMetaCounter = state.showMetaCounter? false : true;
     }
 }
 
@@ -23,8 +23,6 @@ static void handleEvent(SDL_Event &e) {
             break;
         case SDL_MOUSEBUTTONUP:
             state.mouseIsDown = false;
-            break;
-        default:
             break;
     }
 }

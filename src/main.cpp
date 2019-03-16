@@ -20,11 +20,14 @@ int main(int argc, const char* argv[]) {
     }
 
     brd::Display display;
-    display.setWindowName(WINDOW_NAME);
+    display.setWindowName(WINDOW_NAME); // for custom window title name
+    //display.showMetaCounter(true); // for showing fps/ delta in window title
 
     while(!state.quit) {
         // + pre-rendering + = + = + = + = + = + = + = + = + = + = + = + = + = +
         handleEvents();
+
+        display.showMetaCounter(state.showMetaCounter);
 
         // + rendering + = + = + = + = + = + = + = + = + = + = + = + = + = + = +
         // new raster, if w/h override is requested and dimensions are different

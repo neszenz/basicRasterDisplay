@@ -75,6 +75,9 @@ void Display::getTextureDimensions(int &width, int &height) {
 void Display::setWindowName(std::string name) {
     m_window_name = name;
 }
+void Display::showMetaCounter(bool setting) {
+    m_show_meta = setting;
+}
 
 // new raster if dimensions differ from viewport (e.g. after resize)
 bool Display::updateRasterDimensions() {
@@ -116,7 +119,11 @@ void Display::render() {
     // update meta data and window title
     computeFPS();
     computeDeltaTime();
-    SDL_SetWindowTitle(m_window, this->generateTitle().c_str());
+    if (m_show_meta) {
+        SDL_SetWindowTitle(m_window, this->generateTitle().c_str());
+    } else {
+        SDL_SetWindowTitle(m_window, m_window_name.c_str());
+    }
 }
 
 void Display::computeFPS() {

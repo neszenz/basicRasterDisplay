@@ -10,6 +10,7 @@ struct State {
     bool quit = false;
     bool update = true;
     bool mouseIsDown = false;
+    bool showMetaCounter = true;
 };
 
 extern struct State state;

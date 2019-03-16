@@ -34,6 +34,7 @@ namespace brd {
             void getTextureDimensions(int &width, int &height);
 
             void setWindowName(std::string name);
+            void showMetaCounter(bool setting);
 
             bool updateRasterDimensions();
 
@@ -54,6 +55,7 @@ namespace brd {
             std::string m_window_name = "brd::display";
 
             // render meta data
+            bool m_show_meta = false;
             double m_fps = 0;
             Uint32 m_deltaTime = 0;
             Uint32 m_smoothDeltaTime = 0;

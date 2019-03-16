@@ -1,4 +1,4 @@
-#include "util.hpp"
+#include "brd_util.hpp"
 
 /** Log an SDL error with error msg to output stream of our choice
  * @param os - the output stream to write the message to

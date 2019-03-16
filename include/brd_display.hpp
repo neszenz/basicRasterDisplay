@@ -37,6 +37,7 @@ namespace brd {
 
             bool updateRasterDimensions();
 
+            // raw pixel write access
             void lock(Uint32** pixels);
             void unlock();
 

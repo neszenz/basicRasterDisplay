@@ -1,6 +1,6 @@
 #include "brd_display.hpp"
 
-#include "util.hpp"
+#include "brd_util.hpp"
 
 using namespace brd;
 

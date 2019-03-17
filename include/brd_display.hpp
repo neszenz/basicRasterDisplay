@@ -61,8 +61,8 @@ namespace brd {
             Uint32 m_smoothDeltaTime = 0;
             struct {
                 // computeFPS() static variables workaround
-                Uint32 last_second_timestamp = 0;
-                unsigned curr_second_frames = 0;
+                Uint32 last_slice_timestamp = 0;
+                unsigned curr_slice_frames = 0;
                 // computeDeltaTime() static variables workaround
                 Uint32 last_timestamp = 0;
                 // computeSmoothDeltaTime() static variables workaround

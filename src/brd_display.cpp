@@ -127,14 +127,15 @@ void Display::render() {
 }
 
 void Display::computeFPS() {
-    Uint32 time_since_last_second = SDL_GetTicks() - m_meta.last_second_timestamp;
-    m_meta.curr_second_frames++;
+    Uint32 time_since_last_slice = SDL_GetTicks() - m_meta.last_slice_timestamp;
+    m_meta.curr_slice_frames++;
 
-    if (time_since_last_second > 250) {
-        m_fps = 1000.0 * m_meta.curr_second_frames / time_since_last_second;
+    Uint32 slice_size = 250; // milliseconds
+    if (time_since_last_slice > slice_size) {
+        m_fps = 1000.0 * m_meta.curr_slice_frames / time_since_last_slice;
         // reset
-        m_meta.last_second_timestamp = SDL_GetTicks();
-        m_meta.curr_second_frames = 0;
+        m_meta.last_slice_timestamp = SDL_GetTicks();
+        m_meta.curr_slice_frames = 0;
     }
 }
 void Display::computeDeltaTime() {

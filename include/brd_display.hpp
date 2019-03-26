@@ -31,7 +31,9 @@ namespace brd {
             ~Display();
 
             void getViewportDimensions(int &width, int &height);
-            void getTextureDimensions(int &width, int &height);
+            void getRasterDimensions(int &width, int &height);
+
+            void setRasterDimensions(int width, int height);
 
             void setWindowName(std::string name);
             void showMetaCounter(bool setting);
@@ -53,6 +55,8 @@ namespace brd {
 
             // window settings
             std::string m_window_name = "brd::display";
+            int m_tex_width =  -1;
+            int m_tex_height = -1;
 
             // render meta data
             bool m_show_meta = false;

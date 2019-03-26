@@ -28,6 +28,7 @@ int main(int argc, const char* argv[]) {
         handleEvents();
 
         display.showMetaCounter(state.showMetaCounter);
+        display.setRasterDimensions(state.tex_width, state.tex_height);
 
         // + rendering + = + = + = + = + = + = + = + = + = + = + = + = + = + = +
         // new raster, if w/h override is requested and dimensions are different
@@ -41,7 +42,7 @@ int main(int argc, const char* argv[]) {
 
             int t_width;
             int t_height;
-            display.getTextureDimensions(t_width, t_height);
+            display.getRasterDimensions(t_width, t_height);
 
             // now we can write colors to the local representation of our raster
             for (int y = 0; y < t_height; ++y) {

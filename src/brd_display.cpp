@@ -7,8 +7,6 @@ using namespace brd;
 // hard coded config
 #define PIXEL_FORMAT SDL_PIXELFORMAT_RGBA32
 // if tex dimensions are <= 0, the are linked to win dimensions
-const int  TEXTURE_WIDTH    = -1;
-const int  TEXTURE_HEIGHT   = -1;
 const int  WINDOW_WIDTH     = 1280;
 const int  WINDOW_HEIGHT    = 720;
 const int  WINDOW_POS_X     = SDL_WINDOWPOS_CENTERED;
@@ -66,10 +64,15 @@ void Display::getViewportDimensions(int &width, int &height) {
     width = rect.w;
     height = rect.h;
 }
-void Display::getTextureDimensions(int &width, int &height) {
+void Display::getRasterDimensions(int &width, int &height) {
     Uint32 format;
     int access;
     SDL_QueryTexture(m_raster, &format, &access, &width, &height);
+}
+
+void Display::setRasterDimensions(int width, int height) {
+    m_tex_width = width;
+    m_tex_height = height;
 }
 
 void Display::setWindowName(std::string name) {
@@ -179,22 +182,24 @@ bool Display::rasterNeedsUpdate() {
     this->getViewportDimensions(viewport_width, viewport_height);
     int texture_width;
     int texture_height;
-    this->getTextureDimensions(texture_width, texture_height);
+    this->getRasterDimensions(texture_width, texture_height);
 
     // decide
-    if (TEXTURE_WIDTH <= 0 && viewport_width != texture_width) {
+    if ((m_tex_width <= 0 && viewport_width != texture_width)
+            || (m_tex_width > 0 && m_tex_width != texture_width)) {
         return true;
     }
 
-    if (TEXTURE_HEIGHT <= 0 && viewport_height != texture_height) {
+    if ((m_tex_height <= 0 && viewport_height != texture_height)
+            || (m_tex_height > 0 && m_tex_height != texture_height)) {
         return true;
     }
 
     return false;
 }
 SDL_Texture* Display::createNewRaster() {
-    int width = TEXTURE_WIDTH;
-    int height = TEXTURE_HEIGHT;
+    int width = m_tex_width;
+    int height = m_tex_height;
 
     // query viewport dimensions
     int v_width;

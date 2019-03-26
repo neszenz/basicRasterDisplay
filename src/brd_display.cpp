@@ -70,6 +70,14 @@ void Display::getRasterDimensions(int &width, int &height) {
     SDL_QueryTexture(m_raster, &format, &access, &width, &height);
 }
 
+float Display::getAspectRatio() {
+    int width;
+    int height;
+    this->getViewportDimensions(width, height);
+
+    return float(width) / height;
+}
+
 void Display::setRasterDimensions(int width, int height) {
     m_tex_width = width;
     m_tex_height = height;

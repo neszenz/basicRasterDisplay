@@ -85,7 +85,6 @@ void Display::setRasterDimensions(int width, int height) {
 
 void Display::setWindowName(std::string name) {
     m_window_name = name;
-    SDL_SetWindowTitle(m_window, m_window_name.c_str());
 }
 void Display::showMetaCounter(bool setting) {
     m_show_meta = setting;
